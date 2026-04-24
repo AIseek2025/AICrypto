@@ -194,6 +194,12 @@ impl PositionTracker {
     pub fn open_position_count(&self) -> usize {
         self.positions.values().filter(|p| p.is_open()).count()
     }
+
+    pub fn update_mark_price(&mut self, symbol: &str, price: f64) {
+        if let Some(pos) = self.positions.get_mut(symbol) {
+            pos.update_mark_price(price);
+        }
+    }
 }
 
 #[cfg(test)]

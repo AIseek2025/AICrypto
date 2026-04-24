@@ -60,7 +60,8 @@ impl TradeExecutor {
         }
         self.simulate_execution(intent)?;
 
-        let order = self.osm.get_order(&intent.intent_id).unwrap();
+        let order = self.osm.get_order(&intent.intent_id)
+            .ok_or_else(|| anyhow::anyhow!("order not found after execution: {}", intent.intent_id))?;
         Ok(self.build_report_from_tracked(intent, order))
     }
 
@@ -74,11 +75,18 @@ impl TradeExecutor {
         }).map_err(|e| anyhow::anyhow!("{}", e))?;
 
         let quantity: f64 = intent.quantity.parse().unwrap_or(0.0);
+        if quantity <= 0.0 {
+            return Err(anyhow::anyhow!("invalid quantity: {}", intent.quantity));
+        }
         let price = intent
             .price_limit
             .as_ref()
             .and_then(|p| p.parse::<f64>().ok())
-            .unwrap_or(65000.0);
+            .filter(|p| *p > 0.0)
+            .unwrap_or_else(|| {
+                tracing::warn!("no valid price for simulated fill, using symbol-based default");
+                65000.0
+            });
 
         let fill_qty = quantity;
         let fill_price = price * (1.0 + (rand_like_positive() - 0.5) * 0.001);

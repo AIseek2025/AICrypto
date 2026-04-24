@@ -23,6 +23,10 @@ impl OrderBuilder {
         self
     }
 
+    pub fn default_leverage(&self) -> u32 {
+        self.default_leverage
+    }
+
     pub fn signal_to_intent(
         &self,
         signal: &SignalEvent,
@@ -36,6 +40,20 @@ impl OrderBuilder {
                 SignalType::Reduce | SignalType::RiskAlert => (Side::SELL, PositionSide::BOTH),
                 _ => (Side::BUY, PositionSide::BOTH),
             },
+        };
+
+        let (side, position_side) = if matches!(
+            signal.signal_type,
+            SignalType::Exit | SignalType::Reduce | SignalType::RiskAlert
+        ) {
+            let closing_side = match position_side {
+                PositionSide::LONG => (Side::SELL, PositionSide::LONG),
+                PositionSide::SHORT => (Side::BUY, PositionSide::SHORT),
+                _ => (side, position_side),
+            };
+            closing_side
+        } else {
+            (side, position_side)
         };
 
         let (order_type, price_limit, time_in_force) = match price {

@@ -35,6 +35,30 @@ impl RiskEvaluator {
         );
 
         if intent.reduce_only {
+            let hits = self.engine.evaluate(intent, &self.state);
+            let critical_hits: Vec<_> = hits.iter()
+                .filter(|h| h.rule_id == "R001" || h.rule_id == "R004")
+                .collect();
+
+            if !critical_hits.is_empty() {
+                tracing::warn!(
+                    intent_id = %intent.intent_id,
+                    hits = critical_hits.len(),
+                    "reduce-only order blocked by critical risk rules"
+                );
+                return RiskDecision {
+                    decision_id: Uuid::new_v4().to_string(),
+                    target_ref: intent.intent_id.clone(),
+                    decision: RiskVerdict::Deny,
+                    severity: Severity::Critical,
+                    rule_hits: hits,
+                    exposure_snapshot: None,
+                    required_actions: vec![],
+                    review_required: false,
+                    ts_decision: Utc::now().timestamp_millis(),
+                };
+            }
+
             tracing::info!(intent_id = %intent.intent_id, "reduce-only order, auto-approved");
             return RiskDecision {
                 decision_id: Uuid::new_v4().to_string(),
@@ -148,10 +172,19 @@ mod tests {
     #[test]
     fn test_reduce_only_auto_approved() {
         let mut evaluator = RiskEvaluator::new(RuleConfig::default());
-        let intent = make_intent(Some(10), true);
+        let intent = make_intent(Some(3), true);
 
         let decision = evaluator.evaluate(&intent);
         assert_eq!(decision.decision, RiskVerdict::Allow);
+    }
+
+    #[test]
+    fn test_reduce_only_blocked_by_critical_rule() {
+        let mut evaluator = RiskEvaluator::new(RuleConfig::default());
+        let intent = make_intent(Some(10), true);
+
+        let decision = evaluator.evaluate(&intent);
+        assert_eq!(decision.decision, RiskVerdict::Deny);
     }
 
     #[test]

@@ -74,7 +74,11 @@ impl SkillRegistry {
             for entry in entries {
                 let entry = entry?;
                 let path = entry.path();
-                if path.extension().and_then(|e| e.to_str()) != Some("yaml") {
+                if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                    if ext != "yaml" && ext != "yml" {
+                        continue;
+                    }
+                } else {
                     continue;
                 }
 
@@ -131,7 +135,7 @@ impl SkillRegistry {
             risk_rules: yaml.risk_rules,
             applicable_market_states: yaml.applicable_market_states,
             input_contract: yaml.input_contract,
-            output_contract: serde_json::Value::Null,
+            output_contract: yaml.output_contract.clone(),
             status,
             version: yaml.version,
         };
@@ -153,7 +157,10 @@ impl SkillRegistry {
     pub fn find_by_family(&self, family: &SkillFamily) -> Vec<&RegisteredSkill> {
         self.skills
             .values()
-            .filter(|s| std::mem::discriminant(&s.spec.skill_family) == std::mem::discriminant(family))
+            .filter(|s| {
+                std::mem::discriminant(&s.spec.skill_family) == std::mem::discriminant(family)
+                    && matches!(s.spec.status, SkillStatus::BacktestPassed | SkillStatus::PaperApproved | SkillStatus::Live)
+            })
             .collect()
     }
 
@@ -162,6 +169,7 @@ impl SkillRegistry {
             .values()
             .filter(|s| {
                 s.spec.applicable_market_states.iter().any(|ms| ms == state)
+                    && matches!(s.spec.status, SkillStatus::BacktestPassed | SkillStatus::PaperApproved | SkillStatus::Live)
             })
             .collect()
     }
@@ -222,8 +230,8 @@ pub fn evaluate_conditions(
             "lt" => feature_f64 < threshold,
             "gte" => feature_f64 >= threshold,
             "lte" => feature_f64 <= threshold,
-            "eq" => (feature_f64 - threshold).abs() < f64::EPSILON,
-            "ne" => (feature_f64 - threshold).abs() >= f64::EPSILON,
+            "eq" => (feature_f64 - threshold).abs() < 1e-9,
+            "ne" => (feature_f64 - threshold).abs() >= 1e-9,
             other => {
                 tracing::warn!(operator = other, "unknown operator, check fails");
                 false

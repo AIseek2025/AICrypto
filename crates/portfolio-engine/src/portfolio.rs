@@ -88,12 +88,13 @@ impl PortfolioManager {
             _ => current_price,
         };
 
+        let leverage = self.builder.default_leverage();
         let quantity = calculate_position_size(
             self.equity,
             self.max_risk_per_trade_pct,
             current_price,
             stop_price,
-            3,
+            leverage,
         );
 
         if quantity <= 0.0 {
@@ -108,7 +109,7 @@ impl PortfolioManager {
             Direction::SHORT => PositionSide::Short,
             _ => PositionSide::Flat,
         };
-        self.tracker.open_position(&signal.symbol, pos_side, quantity, current_price, 3);
+        self.tracker.open_position(&signal.symbol, pos_side, quantity, current_price, leverage);
 
         Some(intent)
     }
@@ -130,6 +131,12 @@ impl PortfolioManager {
         let pos = self.tracker.get_position(&signal.symbol)?;
         if !pos.is_open() {
             tracing::warn!(symbol = %signal.symbol, "no position to add to");
+            return None;
+        }
+
+        let max_notional = self.equity * self.max_total_exposure_pct;
+        if self.tracker.total_exposure() >= max_notional {
+            tracing::warn!("max total exposure reached, rejecting add");
             return None;
         }
 
@@ -163,6 +170,12 @@ impl PortfolioManager {
         let intent = self.builder.signal_to_intent(signal, reduce_qty, None);
         self.tracker.reduce_position(&signal.symbol, reduce_qty, current_price);
         Some(intent)
+    }
+
+    pub fn update_mark_prices(&mut self, prices: &std::collections::HashMap<String, f64>) {
+        for (symbol, price) in prices {
+            self.tracker.update_mark_price(symbol, *price);
+        }
     }
 
     pub fn tracker(&self) -> &PositionTracker {

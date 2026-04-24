@@ -112,8 +112,7 @@ pub struct GlobalRiskOffReduce {
     consecutive_down_threshold: i32,
     prev_close: f64,
     consecutive_down: i32,
-    sma_sum: f64,
-    sma_count: usize,
+    closes: Vec<f64>,
 }
 
 impl GlobalRiskOffReduce {
@@ -123,8 +122,7 @@ impl GlobalRiskOffReduce {
             consecutive_down_threshold: 3,
             prev_close: 0.0,
             consecutive_down: 0,
-            sma_sum: 0.0,
-            sma_count: 0,
+            closes: Vec::new(),
         }
     }
 }
@@ -143,11 +141,10 @@ impl BacktestStrategy for GlobalRiskOffReduce {
             }
         }
 
-        self.sma_sum += bar.close;
-        self.sma_count += 1;
-        let sma = if self.sma_count >= self.sma_period {
-            let _start_idx = self.sma_count.saturating_sub(self.sma_period);
-            self.sma_sum / self.sma_period.min(self.sma_count) as f64
+        self.closes.push(bar.close);
+        let sma = if self.closes.len() >= self.sma_period {
+            let start = self.closes.len() - self.sma_period;
+            self.closes[start..].iter().sum::<f64>() / self.sma_period as f64
         } else {
             bar.close
         };

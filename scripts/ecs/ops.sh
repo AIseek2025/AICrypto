@@ -7,8 +7,8 @@ set -euo pipefail
 # 命令: status | restart | logs | reload-nginx | cert-check | health
 # ============================================================
 
-REMOTE="admin@8.218.209.218"
-DOMAIN="aicrypto.cool"
+REMOTE="${DEPLOY_REMOTE:-admin@localhost}"
+DOMAIN="${DEPLOY_DOMAIN:-localhost}"
 APP_PORT=3006
 CODE_DIR="/var/www/aicrypto/current"
 LOG_DIR="/var/log/aicrypto"

@@ -3,12 +3,21 @@ use reqwest::Client;
 use std::time::Duration;
 use tracing;
 
-#[derive(Debug, Clone)]
 pub struct UserStreamClient {
     client: Client,
     base_url: String,
     api_key: String,
     listen_key: Option<String>,
+}
+
+impl std::fmt::Debug for UserStreamClient {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("UserStreamClient")
+            .field("base_url", &self.base_url)
+            .field("api_key", &"***REDACTED***")
+            .field("listen_key", &self.listen_key.as_ref().map(|_| "***REDACTED***"))
+            .finish()
+    }
 }
 
 impl UserStreamClient {
@@ -47,7 +56,7 @@ impl UserStreamClient {
             .ok_or_else(|| anyhow::anyhow!("listenKey not found in response"))?
             .to_string();
 
-        tracing::info!(listen_key = %listen_key, "listenKey created");
+        tracing::info!(listen_key = "***", "listenKey created");
         self.listen_key = Some(listen_key.clone());
         Ok(listen_key)
     }

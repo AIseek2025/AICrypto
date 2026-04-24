@@ -65,29 +65,39 @@ impl RuleEngine {
     }
 
     fn check_leverage(&self, intent: &OrderIntent, hits: &mut Vec<RuleHit>) {
-        if let Some(lev) = intent.leverage_hint {
-            if lev > self.config.max_leverage {
-                hits.push(RuleHit {
-                    rule_id: "R001".to_string(),
-                    rule_name: "max_leverage".to_string(),
-                    detail: format!(
-                        "requested leverage {} exceeds max {}",
-                        lev, self.config.max_leverage
-                    ),
-                });
-            }
+        let lev = intent.leverage_hint.unwrap_or(1);
+        if lev > self.config.max_leverage {
+            hits.push(RuleHit {
+                rule_id: "R001".to_string(),
+                rule_name: "max_leverage".to_string(),
+                detail: format!(
+                    "requested leverage {} exceeds max {}",
+                    lev, self.config.max_leverage
+                ),
+            });
         }
     }
 
-    fn check_position_size(&self, intent: &OrderIntent, state: &RiskState, hits: &mut Vec<RuleHit>) {
-        if let Ok(qty) = intent.quantity.parse::<f64>() {
-            let price = intent
-                .price_limit
-                .as_ref()
-                .and_then(|p| p.parse::<f64>().ok())
-                .unwrap_or(state.equity * 0.01);
+    fn compute_notional(&self, intent: &OrderIntent, _state: &RiskState) -> Option<f64> {
+        let qty = intent.quantity.parse::<f64>().ok()?;
+        if qty <= 0.0 {
+            return None;
+        }
+        let price = intent
+            .price_limit
+            .as_ref()
+            .and_then(|p| p.parse::<f64>().ok())
+            .filter(|p| *p > 0.0);
 
-            let notional = qty * price;
+        let notional = match price {
+            Some(p) => qty * p,
+            None => return None,
+        };
+        Some(notional)
+    }
+
+    fn check_position_size(&self, intent: &OrderIntent, state: &RiskState, hits: &mut Vec<RuleHit>) {
+        if let Some(notional) = self.compute_notional(intent, state) {
             let existing = state.open_positions.get(&intent.symbol).copied().unwrap_or(0.0);
             let total_notional = existing + notional;
 
@@ -105,15 +115,8 @@ impl RuleEngine {
     }
 
     fn check_total_exposure(&self, intent: &OrderIntent, state: &RiskState, hits: &mut Vec<RuleHit>) {
-        if let Ok(qty) = intent.quantity.parse::<f64>() {
-            let price = intent
-                .price_limit
-                .as_ref()
-                .and_then(|p| p.parse::<f64>().ok())
-                .unwrap_or(state.equity * 0.01);
-
-            let additional = qty * price;
-            let new_total = state.total_exposure + additional;
+        if let Some(notional) = self.compute_notional(intent, state) {
+            let new_total = state.total_exposure + notional;
 
             if new_total > self.config.max_total_exposure {
                 hits.push(RuleHit {
@@ -178,14 +181,7 @@ impl RuleEngine {
         if state.equity <= 0.0 {
             return;
         }
-        if let Ok(qty) = intent.quantity.parse::<f64>() {
-            let price = intent
-                .price_limit
-                .as_ref()
-                .and_then(|p| p.parse::<f64>().ok())
-                .unwrap_or(state.equity * 0.01);
-
-            let notional = qty * price;
+        if let Some(notional) = self.compute_notional(intent, state) {
             let risk_pct = notional / state.equity;
 
             if risk_pct > self.config.max_single_risk_pct {

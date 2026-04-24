@@ -1,5 +1,6 @@
 mod handlers;
 
+use axum::http;
 use aicrypto_foundation::config::AppConfig;
 use aicrypto_foundation::observability;
 use handlers::AppState;
@@ -25,7 +26,16 @@ async fn main() -> anyhow::Result<()> {
     let skills_dir = project_root.join("skills");
     let state = Arc::new(RwLock::new(AppState::new(&skills_dir)?));
 
-    let app = handlers::router(state.clone()).layer(CorsLayer::permissive());
+    let allowed_origin = std::env::var("CORS_ORIGIN")
+        .unwrap_or_else(|_| "http://localhost:3000".to_string());
+    let cors = CorsLayer::new()
+        .allow_origin(allowed_origin.parse::<http::HeaderValue>().unwrap_or_else(|_| {
+            http::HeaderValue::from_static("http://localhost:3000")
+        }))
+        .allow_methods(tower_http::cors::Any)
+        .allow_headers(tower_http::cors::Any);
+
+    let app = handlers::router(state.clone()).layer(cors);
 
     let port: u16 = std::env::var("API_PORT")
         .unwrap_or_else(|_| "8080".to_string())

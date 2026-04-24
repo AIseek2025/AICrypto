@@ -216,7 +216,7 @@ mod tests {
             applicable_market_states: vec!["BULL_TREND".into()],
             input_contract: json!(null),
             output_contract: json!(null),
-            status: SkillStatus::Draft,
+            status: SkillStatus::Live,
             version: "v1".into(),
         };
 

@@ -7,8 +7,8 @@ set -euo pipefail
 # 用法: ./scripts/ecs/setup-ssl.sh
 # ============================================================
 
-REMOTE="admin@8.218.209.218"
-DOMAIN="aicrypto.cool"
+REMOTE="${DEPLOY_REMOTE:-admin@localhost}"
+DOMAIN="${DEPLOY_DOMAIN:-localhost}"
 APP_PORT=3006
 
 echo "=========================================="

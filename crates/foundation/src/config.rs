@@ -34,7 +34,7 @@ pub struct NatsConfig {
     pub url: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct BinanceConfig {
     pub rest_base_url: String,
     pub ws_base_url: String,
@@ -49,6 +49,18 @@ pub struct BinanceConfig {
     )]
     pub api_secret: Option<String>,
     pub testnet: bool,
+}
+
+impl std::fmt::Debug for BinanceConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BinanceConfig")
+            .field("rest_base_url", &self.rest_base_url)
+            .field("ws_base_url", &self.ws_base_url)
+            .field("api_key", &self.api_key.as_ref().map(|_| "***REDACTED***"))
+            .field("api_secret", &self.api_secret.as_ref().map(|_| "***REDACTED***"))
+            .field("testnet", &self.testnet)
+            .finish()
+    }
 }
 
 fn serialize_secret<S: Serializer>(val: &Option<String>, s: S) -> Result<S::Ok, S::Error> {

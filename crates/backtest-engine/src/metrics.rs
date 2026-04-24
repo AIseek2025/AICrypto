@@ -67,24 +67,36 @@ impl BacktestMetrics {
         let total_commission: f64 = trades.iter().map(|t| t.commission).sum();
         let net_pnl = total_pnl - total_commission;
 
-        let avg_win = if winning.is_empty() { 0.0 } else { winning.iter().map(|t| t.pnl).sum::<f64>() / winning.len() as f64 };
-        let avg_loss = if losing.is_empty() { 0.0 } else { losing.iter().map(|t| t.pnl).sum::<f64>() / losing.len() as f64 };
-
         let gross_profit: f64 = winning.iter().map(|t| t.pnl).sum();
         let gross_loss: f64 = losing.iter().map(|t| t.pnl.abs()).sum();
-        let profit_factor = if gross_loss == 0.0 { f64::INFINITY } else { gross_profit / gross_loss };
+        let profit_factor = if gross_loss == 0.0 && gross_profit > 0.0 {
+            gross_profit / 0.0001
+        } else if gross_loss == 0.0 {
+            0.0
+        } else {
+            gross_profit / gross_loss
+        };
+
+        let avg_win = if winning.is_empty() { 0.0 } else { winning.iter().map(|t| t.pnl).sum::<f64>() / winning.len() as f64 };
+        let avg_loss = if losing.is_empty() { 0.0 } else { losing.iter().map(|t| t.pnl).sum::<f64>() / losing.len() as f64 };
 
         let mut equity = initial_equity;
         let mut peak = equity;
         let mut max_dd = 0.0_f64;
+        let mut max_drawdown_pct = 0.0_f64;
         let mut equity_curve = Vec::new();
         let mut daily_returns = Vec::new();
 
+        let mut dd_peak = equity;
         for t in &trades {
             equity += t.pnl - t.commission;
+            dd_peak = dd_peak.max(equity);
+            let dd = dd_peak - equity;
+            if dd > max_dd {
+                max_dd = dd;
+                max_drawdown_pct = if dd_peak > 0.0 { dd / dd_peak * 100.0 } else { 0.0 };
+            }
             peak = peak.max(equity);
-            let dd = peak - equity;
-            max_dd = max_dd.max(dd);
             equity_curve.push(EquityPoint {
                 time: t.exit_time,
                 equity,
@@ -92,8 +104,6 @@ impl BacktestMetrics {
             });
             daily_returns.push(t.pnl / initial_equity);
         }
-
-        let max_drawdown_pct = if peak > 0.0 { max_dd / peak * 100.0 } else { 0.0 };
 
         let sharpe = if daily_returns.len() < 2 {
             0.0

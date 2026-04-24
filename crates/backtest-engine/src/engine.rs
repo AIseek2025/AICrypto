@@ -71,8 +71,8 @@ impl BacktestEngine {
                 StrategyAction::None => {}
                 StrategyAction::OpenLong { quantity, reason } if position.is_none() => {
                     let fill_price = self.apply_slippage(bar.close, true);
-                    let commission = fill_price * quantity * self.config.commission_rate;
                     let qty = quantity.min(self.position_size(equity, fill_price));
+                    let commission = fill_price * qty * self.config.commission_rate;
                     if qty > 0.0 {
                         position = Some(Position::new_long(symbol, qty, fill_price, bar.time));
                         equity -= commission;
@@ -80,8 +80,8 @@ impl BacktestEngine {
                 }
                 StrategyAction::OpenShort { quantity, reason } if position.is_none() => {
                     let fill_price = self.apply_slippage(bar.close, false);
-                    let commission = fill_price * quantity * self.config.commission_rate;
                     let qty = quantity.min(self.position_size(equity, fill_price));
+                    let commission = fill_price * qty * self.config.commission_rate;
                     if qty > 0.0 {
                         position = Some(Position::new_short(symbol, qty, fill_price, bar.time));
                         equity -= commission;
@@ -89,7 +89,8 @@ impl BacktestEngine {
                 }
                 StrategyAction::ClosePosition { reason } if position.is_some() => {
                     let mut pos = position.take().unwrap();
-                    let fill_price = self.apply_slippage(bar.close, matches!(pos.side, PositionSide::Long));
+                    let is_buy = matches!(pos.side, PositionSide::Short);
+                    let fill_price = self.apply_slippage(bar.close, is_buy);
                     let commission = fill_price * pos.quantity * self.config.commission_rate;
                     let pnl = pos.close(fill_price, commission);
 
@@ -116,7 +117,7 @@ impl BacktestEngine {
                         exit_reason: reason,
                     });
 
-                    equity += pnl;
+                    equity += pnl - commission;
                 }
                 _ => {}
             }
@@ -130,8 +131,10 @@ impl BacktestEngine {
 
         if let Some(mut pos) = position.take() {
             if let Some(last_bar) = candles.last() {
-                let commission = last_bar.close * pos.quantity * self.config.commission_rate;
-                let pnl = pos.close(last_bar.close, commission);
+                let is_buy = matches!(pos.side, PositionSide::Short);
+                let fill_price = self.apply_slippage(last_bar.close, is_buy);
+                let commission = fill_price * pos.quantity * self.config.commission_rate;
+                let pnl = pos.close(fill_price, commission);
                 trade_id += 1;
                 trades.push(TradeRecord {
                     trade_id,
@@ -143,7 +146,7 @@ impl BacktestEngine {
                     entry_time: pos.open_time,
                     exit_time: last_bar.time,
                     entry_price: pos.entry_price,
-                    exit_price: last_bar.close,
+                    exit_price: fill_price,
                     quantity: pos.quantity,
                     pnl,
                     pnl_pct: if pos.entry_price > 0.0 { pnl / (pos.entry_price * pos.quantity) } else { 0.0 },
@@ -151,7 +154,7 @@ impl BacktestEngine {
                     bars_held: pos.bars_held,
                     exit_reason: "end_of_data".to_string(),
                 });
-                equity += pnl;
+                equity += pnl - commission;
             }
         }
 

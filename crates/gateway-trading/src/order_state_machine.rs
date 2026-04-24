@@ -59,6 +59,9 @@ impl OrderStateMachine {
     }
 
     pub fn create_order(&mut self, intent_id: &str, symbol: &str) {
+        if self.orders.contains_key(intent_id) {
+            tracing::warn!(intent_id = intent_id, "order already exists, overwriting");
+        }
         let order = TrackedOrder::new(intent_id, symbol);
         self.orders.insert(intent_id.to_string(), order);
         tracing::info!(intent_id = intent_id, symbol = symbol, "order created");
@@ -79,7 +82,8 @@ impl OrderStateMachine {
                 order.exchange_order_id = Some(exchange_order_id.clone());
                 OrderStatus::Acked
             }
-            (OrderStatus::Sent | OrderStatus::Acked, OrderEvent::PartiallyFilled { filled_qty, fill_price }) => {
+            (OrderStatus::Sent | OrderStatus::Acked | OrderStatus::PartiallyFilled,
+             OrderEvent::PartiallyFilled { filled_qty, fill_price }) => {
                 let prev_qty = order.filled_qty;
                 let prev_price = order.avg_fill_price;
                 let total_qty = prev_qty + filled_qty;
@@ -111,7 +115,19 @@ impl OrderStateMachine {
                 order.reject_reason = Some(reason.clone());
                 OrderStatus::Rejected
             }
-            (OrderStatus::Acked, OrderEvent::Expired) => OrderStatus::Expired,
+            (OrderStatus::Sent | OrderStatus::Acked, OrderEvent::Expired) => OrderStatus::Expired,
+            (OrderStatus::CancelPending, OrderEvent::Filled { filled_qty, fill_price }) => {
+                let prev_qty = order.filled_qty;
+                let prev_price = order.avg_fill_price;
+                let total_qty = prev_qty + filled_qty;
+                if total_qty > 0.0 {
+                    order.avg_fill_price = (prev_price * prev_qty + fill_price * filled_qty) / total_qty;
+                }
+                order.filled_qty = total_qty;
+                order.commission += filled_qty * fill_price * 0.0004;
+                order.reconcile_state = Some(ReconcileState::Pending);
+                OrderStatus::Filled
+            }
             (OrderStatus::Filled, OrderEvent::Reconciled) => {
                 order.reconcile_state = Some(ReconcileState::Matched);
                 OrderStatus::Reconciled

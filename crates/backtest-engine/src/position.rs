@@ -64,10 +64,9 @@ impl Position {
             PositionSide::Long => (exit_price - self.entry_price) * self.quantity,
             PositionSide::Short => (self.entry_price - exit_price) * self.quantity,
         };
-        self.realized_pnl = pnl - commission;
         self.commission_paid += commission;
         self.quantity = 0.0;
-        self.realized_pnl
+        pnl
     }
 
     pub fn is_open(&self) -> bool {

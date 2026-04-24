@@ -261,8 +261,15 @@ pub async fn run_nats_pipeline(
 
     let registry = SkillRegistry::load_from_dir(skills_dir)?;
     let signal_engine = SignalEngine::new(registry);
-    let mut portfolio_manager = PortfolioManager::new(equity, "main");
-    let mut risk_evaluator = RiskEvaluator::new(RuleConfig::default());
+    let mut portfolio_manager = PortfolioManager::new(equity, "main")
+        .with_max_risk(0.02)
+        .with_max_exposure(0.80)
+        .with_max_positions(5);
+    let risk_state = RiskState {
+        equity,
+        ..Default::default()
+    };
+    let mut risk_evaluator = RiskEvaluator::new(RuleConfig::default()).with_state(risk_state);
     let mut executor = TradeExecutor::new("binance_testnet", true);
 
     tracing::info!("NATS pipeline ready, waiting for FeatureVector messages...");
@@ -282,19 +289,58 @@ pub async fn run_nats_pipeline(
 
                 let signals = signal_engine.evaluate(&fv);
                 for signal in signals {
-                    let _ = publish(&client, SUBJECT_SIGNAL_EVENT, &signal).await;
+                    if let Err(e) = publish(&client, SUBJECT_SIGNAL_EVENT, &signal).await {
+                        tracing::error!(error = %e, "failed to publish signal");
+                    }
 
                     if let Some(intent) = portfolio_manager.process_signal(&signal, current_price) {
-                        let _ = publish(&client, SUBJECT_ORDER_INTENT, &intent).await;
+                        if let Err(e) = publish(&client, SUBJECT_ORDER_INTENT, &intent).await {
+                            tracing::error!(error = %e, "failed to publish intent");
+                        }
 
                         let decision = risk_evaluator.evaluate(&intent);
-                        let _ = publish(&client, SUBJECT_RISK_DECISION, &decision).await;
+                        if let Err(e) = publish(&client, SUBJECT_RISK_DECISION, &decision).await {
+                            tracing::error!(error = %e, "failed to publish decision");
+                        }
 
-                        if let Ok(report) = executor.submit(&intent, &decision) {
-                            let _ = publish(&client, SUBJECT_EXECUTION_REPORT, &report).await;
+                        match decision.decision {
+                            aicrypto_protocols::risk_decision::RiskVerdict::Allow => {
+                                if let Ok(report) = executor.submit(&intent, &decision) {
+                                    if let Err(e) = publish(&client, SUBJECT_EXECUTION_REPORT, &report).await {
+                                        tracing::error!(error = %e, "failed to publish report");
+                                    }
+                                }
+                            }
+                            aicrypto_protocols::risk_decision::RiskVerdict::Shrink => {
+                                let mut shrunk = intent.clone();
+                                if let Ok(qty) = intent.quantity.parse::<f64>() {
+                                    shrunk.quantity = format!("{:.8}", qty * 0.5);
+                                }
+                                if let Ok(report) = executor.submit(&shrunk, &decision) {
+                                    if let Err(e) = publish(&client, SUBJECT_EXECUTION_REPORT, &report).await {
+                                        tracing::error!(error = %e, "failed to publish report");
+                                    }
+                                }
+                            }
+                            aicrypto_protocols::risk_decision::RiskVerdict::Deny => {
+                                tracing::warn!(intent_id = %intent.intent_id, "order denied by risk engine");
+                            }
+                            aicrypto_protocols::risk_decision::RiskVerdict::Review => {
+                                tracing::warn!(intent_id = %intent.intent_id, "order requires manual review");
+                            }
                         }
                     }
                 }
+
+                let tracker = portfolio_manager.tracker();
+                let mut updated_state = risk_evaluator.state().clone();
+                updated_state.total_exposure = tracker.total_exposure();
+                updated_state.open_positions = tracker.all_positions()
+                    .iter()
+                    .map(|p| (p.symbol.clone(), p.notional_value()))
+                    .collect();
+                updated_state.equity = portfolio_manager.equity();
+                risk_evaluator.update_state(updated_state);
             }
             Err(e) => {
                 tracing::error!(error = %e, "failed to deserialize FeatureVector");

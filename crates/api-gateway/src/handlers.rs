@@ -16,11 +16,19 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
+const MAX_HISTORY: usize = 1000;
+
 pub struct AppState {
     pub pipeline: Pipeline,
     pub signal_history: Vec<SignalEvent>,
     pub risk_history: Vec<RiskDecisionRecord>,
     pub execution_history: Vec<ExecutionRecord>,
+}
+
+fn trim_history<T>(vec: &mut Vec<T>, max: usize) {
+    if vec.len() > max {
+        vec.drain(0..vec.len() - max);
+    }
 }
 
 impl AppState {
@@ -346,6 +354,10 @@ async fn run_pipeline(
             total_intents += result.intents.len();
         }
     }
+
+    trim_history(&mut s.signal_history, MAX_HISTORY);
+    trim_history(&mut s.risk_history, MAX_HISTORY);
+    trim_history(&mut s.execution_history, MAX_HISTORY);
 
     let open = s.pipeline.portfolio_manager().tracker().open_position_count();
     Json(PipelineRunResponse {
