@@ -56,3 +56,4 @@ logs/
 
 # Coverage
 coverage/
+.planning/
