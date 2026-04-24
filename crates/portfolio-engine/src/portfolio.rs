@@ -113,14 +113,16 @@ impl PortfolioManager {
         Some(intent)
     }
 
-    fn handle_exit(&mut self, signal: &SignalEvent, _current_price: f64) -> Option<OrderIntent> {
+    fn handle_exit(&mut self, signal: &SignalEvent, current_price: f64) -> Option<OrderIntent> {
         let pos = self.tracker.get_position(&signal.symbol)?;
         if !pos.is_open() {
             tracing::warn!(symbol = %signal.symbol, "no open position to exit");
             return None;
         }
 
-        let intent = self.builder.signal_to_intent(signal, pos.quantity, None);
+        let qty = pos.quantity;
+        let intent = self.builder.signal_to_intent(signal, qty, None);
+        self.tracker.reduce_position(&signal.symbol, qty, current_price);
         Some(intent)
     }
 
@@ -139,7 +141,7 @@ impl PortfolioManager {
         Some(intent)
     }
 
-    fn handle_reduce(&mut self, signal: &SignalEvent, _current_price: f64) -> Option<OrderIntent> {
+    fn handle_reduce(&mut self, signal: &SignalEvent, current_price: f64) -> Option<OrderIntent> {
         let pos = self.tracker.get_position(&signal.symbol)?;
         if !pos.is_open() {
             return None;
@@ -147,10 +149,11 @@ impl PortfolioManager {
 
         let reduce_qty = pos.quantity * 0.5;
         let intent = self.builder.signal_to_intent(signal, reduce_qty, None);
+        self.tracker.reduce_position(&signal.symbol, reduce_qty, current_price);
         Some(intent)
     }
 
-    fn handle_risk_alert(&mut self, signal: &SignalEvent, _current_price: f64) -> Option<OrderIntent> {
+    fn handle_risk_alert(&mut self, signal: &SignalEvent, current_price: f64) -> Option<OrderIntent> {
         let pos = self.tracker.get_position(&signal.symbol)?;
         if !pos.is_open() {
             return None;
@@ -158,6 +161,7 @@ impl PortfolioManager {
 
         let reduce_qty = pos.quantity * 0.5;
         let intent = self.builder.signal_to_intent(signal, reduce_qty, None);
+        self.tracker.reduce_position(&signal.symbol, reduce_qty, current_price);
         Some(intent)
     }
 

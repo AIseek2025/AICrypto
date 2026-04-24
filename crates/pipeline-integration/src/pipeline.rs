@@ -150,26 +150,67 @@ impl Pipeline {
         // Stage 5: Execution
         let mut reports = Vec::new();
         for (intent, decision) in intents.iter().zip(decisions.iter()) {
-            match self.executor.submit(intent, decision) {
-                Ok(report) => {
-                    tracing::info!(
-                        report_id = %report.report_id,
-                        status = ?report.order_status,
-                        filled_qty = ?report.filled_qty,
-                        avg_price = ?report.avg_fill_price,
-                        "Stage 5 ✓ ExecutionReport generated"
-                    );
-                    reports.push(report);
+            match decision.decision {
+                aicrypto_protocols::risk_decision::RiskVerdict::Allow => {
+                    match self.executor.submit(intent, decision) {
+                        Ok(report) => {
+                            tracing::info!(
+                                report_id = %report.report_id,
+                                status = ?report.order_status,
+                                filled_qty = ?report.filled_qty,
+                                avg_price = ?report.avg_fill_price,
+                                "Stage 5 ✓ ExecutionReport generated"
+                            );
+                            reports.push(report);
+                        }
+                        Err(e) => {
+                            tracing::error!(
+                                intent_id = %intent.intent_id,
+                                error = %e,
+                                "Stage 5 ✗ execution failed"
+                            );
+                        }
+                    }
                 }
-                Err(e) => {
-                    tracing::error!(
+                aicrypto_protocols::risk_decision::RiskVerdict::Shrink => {
+                    tracing::warn!(
                         intent_id = %intent.intent_id,
-                        error = %e,
-                        "Stage 5 ✗ execution failed"
+                        "Stage 5 ⚠ Shrink verdict — submitting with reduced quantity"
+                    );
+                    let mut shrunk = intent.clone();
+                    if let Ok(qty) = intent.quantity.parse::<f64>() {
+                        shrunk.quantity = format!("{:.8}", qty * 0.5);
+                    }
+                    match self.executor.submit(&shrunk, decision) {
+                        Ok(report) => reports.push(report),
+                        Err(e) => tracing::error!(error = %e, "Stage 5 ✗ shrunk execution failed"),
+                    }
+                }
+                aicrypto_protocols::risk_decision::RiskVerdict::Deny => {
+                    tracing::warn!(
+                        intent_id = %intent.intent_id,
+                        "Stage 5 ✗ order denied by risk engine"
+                    );
+                }
+                aicrypto_protocols::risk_decision::RiskVerdict::Review => {
+                    tracing::warn!(
+                        intent_id = %intent.intent_id,
+                        "Stage 5 ⏸ order queued for manual review"
                     );
                 }
             }
         }
+
+        // Post-execution: sync risk state from portfolio tracker
+        let tracker = self.portfolio_manager.tracker();
+        let mut updated_state = self.risk_evaluator.state().clone();
+        updated_state.total_exposure = tracker.total_exposure();
+        updated_state.open_positions = tracker.all_positions()
+            .iter()
+            .map(|p| (p.symbol.clone(), p.notional_value()))
+            .collect();
+        updated_state.equity = self.portfolio_manager.equity();
+        self.risk_evaluator.update_state(updated_state);
 
         tracing::info!(
             symbol = symbol,
@@ -231,11 +272,19 @@ pub async fn run_nats_pipeline(
             Ok(fv) => {
                 tracing::info!(symbol = %fv.symbol, "received FeatureVector");
 
+                let current_price = fv.features.get("close")
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or(0.0);
+                if current_price <= 0.0 {
+                    tracing::warn!(symbol = %fv.symbol, "no valid price in FeatureVector, skipping");
+                    continue;
+                }
+
                 let signals = signal_engine.evaluate(&fv);
                 for signal in signals {
                     let _ = publish(&client, SUBJECT_SIGNAL_EVENT, &signal).await;
 
-                    if let Some(intent) = portfolio_manager.process_signal(&signal, 0.0) {
+                    if let Some(intent) = portfolio_manager.process_signal(&signal, current_price) {
                         let _ = publish(&client, SUBJECT_ORDER_INTENT, &intent).await;
 
                         let decision = risk_evaluator.evaluate(&intent);

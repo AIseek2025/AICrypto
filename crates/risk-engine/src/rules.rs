@@ -85,7 +85,7 @@ impl RuleEngine {
                 .price_limit
                 .as_ref()
                 .and_then(|p| p.parse::<f64>().ok())
-                .unwrap_or(0.0);
+                .unwrap_or(state.equity * 0.01);
 
             let notional = qty * price;
             let existing = state.open_positions.get(&intent.symbol).copied().unwrap_or(0.0);
@@ -110,7 +110,7 @@ impl RuleEngine {
                 .price_limit
                 .as_ref()
                 .and_then(|p| p.parse::<f64>().ok())
-                .unwrap_or(0.0);
+                .unwrap_or(state.equity * 0.01);
 
             let additional = qty * price;
             let new_total = state.total_exposure + additional;
@@ -183,7 +183,7 @@ impl RuleEngine {
                 .price_limit
                 .as_ref()
                 .and_then(|p| p.parse::<f64>().ok())
-                .unwrap_or(0.0);
+                .unwrap_or(state.equity * 0.01);
 
             let notional = qty * price;
             let risk_pct = notional / state.equity;

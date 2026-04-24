@@ -165,7 +165,7 @@ pub fn calculate_position_size(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use aicrypto_protocols::signal_event::SignalEvent;
+    use aicrypto_protocols::signal_event::{SignalEvent, Horizon};
 
     fn make_signal(signal_type: SignalType, direction: Direction, symbol: &str) -> SignalEvent {
         SignalEvent {
