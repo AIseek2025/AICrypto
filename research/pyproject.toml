@@ -35,7 +35,9 @@ ml = [
     "torch>=2.3",
     "transformers>=4.42",
     "langchain>=0.2",
+    "langgraph>=0.2",
     "openai>=1.35",
+    "networkx>=3.3",
 ]
 dev = [
     "pytest>=8.2",
