@@ -1,0 +1,59 @@
+skill_id: trend_acceleration_exit_v1
+skill_name: 高位加速后尾部离场
+skill_family: trend
+version: v1
+status: draft
+
+entry_conditions:
+  description: 检测到高位加速赶顶信号，发出减仓/离场信号
+  checks:
+    - type: overbought
+      field: rsi_14
+      operator: gt
+      threshold: 80.0
+    - type: bb_upper_touch
+      field: bb_position
+      operator: gt
+      threshold: 0.95
+    - type: volume_divergence
+      field: volume_ratio_20
+      operator: lt
+      threshold: 0.8
+    - type: stoch_overbought
+      field: stoch_k
+      operator: gt
+      threshold: 85.0
+
+position_rules:
+  initial_size_pct: 0.0
+  description: 此 Skill 不开仓，只发出退出信号
+
+exit_rules:
+  description: 发出 CLOSE 信号
+  take_profit:
+    type: market
+  stop_loss:
+    type: none
+
+risk_rules:
+  description: 风控类 Skill，不消耗风险预算
+
+applicable_market_states:
+  - BULL_TREND
+  - BULL_EUPHORIA
+
+input_contract:
+  features_required:
+    - rsi_14
+    - bb_position
+    - volume_ratio_20
+    - stoch_k
+    - stoch_d
+    - macd_hist
+  events_required:
+    - kline
+
+output_contract:
+  signal_type: exit
+  direction: NEUTRAL
+  horizon: intraday

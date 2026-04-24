@@ -1,0 +1,49 @@
+skill_id: risk_extreme_vol_reduce_v1
+skill_name: 极端波动自动降低杠杆和仓位
+skill_family: risk
+version: v1
+status: draft
+
+entry_conditions:
+  description: 检测到极端波动环境，发出减仓信号
+  checks:
+    - type: extreme_volatility
+      field: atr_pct
+      operator: gt
+      threshold: 0.03
+    - type: high_hist_vol
+      field: hist_vol_20
+      operator: gt
+      threshold: 0.8
+
+position_rules:
+  description: 此 Skill 不开仓，只发出减仓信号
+
+exit_rules:
+  description: 发出 REDUCE 信号，建议降低仓位 50%
+  reduce_pct: 0.50
+
+risk_rules:
+  description: 风控类 Skill，优先级最高
+  priority: critical
+
+applicable_market_states:
+  - BULL_TREND
+  - RANGE_NEUTRAL
+  - RISK_OFF
+  - PANIC_SELL
+  - SHORT_SQUEEZE
+  - EVENT_DRIVEN
+
+input_contract:
+  features_required:
+    - atr_pct
+    - hist_vol_20
+    - bb_width
+  events_required:
+    - kline
+
+output_contract:
+  signal_type: reduce
+  direction: NEUTRAL
+  horizon: intraday

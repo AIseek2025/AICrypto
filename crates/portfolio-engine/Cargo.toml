@@ -1,0 +1,27 @@
+[package]
+name = "aicrypto-portfolio-engine"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "aicrypto_portfolio_engine"
+path = "src/lib.rs"
+
+[[bin]]
+name = "portfolio-engine"
+path = "src/main.rs"
+
+[features]
+default = ["server"]
+server = []
+
+[dependencies]
+aicrypto-protocols = { path = "../protocols" }
+aicrypto-foundation = { path = "../foundation" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+uuid = { workspace = true, features = ["v4"] }

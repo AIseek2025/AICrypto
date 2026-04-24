@@ -1,0 +1,31 @@
+[package]
+name = "aicrypto-api-gateway"
+version.workspace = true
+edition.workspace = true
+
+[features]
+default = ["server"]
+server = []
+
+[[bin]]
+name = "api-gateway"
+path = "src/main.rs"
+
+[dependencies]
+aicrypto-protocols = { path = "../protocols" }
+aicrypto-foundation = { path = "../foundation" }
+aicrypto-signal-runtime = { path = "../signal-runtime" }
+aicrypto-portfolio-engine = { path = "../portfolio-engine" }
+aicrypto-risk-engine = { path = "../risk-engine" }
+aicrypto-pipeline-integration = { path = "../pipeline-integration" }
+aicrypto-feature-engine = { path = "../feature-engine" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+uuid = { workspace = true, features = ["v4"] }
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }

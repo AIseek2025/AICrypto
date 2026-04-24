@@ -1,0 +1,27 @@
+[package]
+name = "aicrypto-feature-engine"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "aicrypto_feature_engine"
+path = "src/lib.rs"
+
+[[bin]]
+name = "feature-engine"
+path = "src/main.rs"
+
+[features]
+default = ["server"]
+server = []
+
+[dependencies]
+aicrypto-protocols = { path = "../protocols" }
+aicrypto-foundation = { path = "../foundation" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+sqlx = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }

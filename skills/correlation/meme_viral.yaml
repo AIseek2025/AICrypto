@@ -1,0 +1,57 @@
+skill_id: correlation_meme_viral_v1
+skill_name: Meme 传播热度爆发后相关币交易
+skill_family: correlation
+version: v1
+status: draft
+
+entry_conditions:
+  description: 检测到 meme 币热度爆发，相关主流币短期做多
+  checks:
+    - type: meme_volume_spike
+      description: Meme 币成交量异常放大
+    - type: sentiment_positive
+      field: market_sentiment
+      operator: gt
+      threshold: 0.6
+    - type: not_overbought
+      field: rsi_14
+      operator: lt
+      threshold: 70.0
+
+position_rules:
+  initial_size_pct: 0.03
+  max_size_pct: 0.08
+  leverage_max: 2
+
+exit_rules:
+  take_profit:
+    type: fixed_ratio
+    target_pct: 0.05
+  stop_loss:
+    type: fixed
+    max_loss_pct: 0.025
+  time_exit:
+    max_holding_bars: 72
+
+risk_rules:
+  max_loss_per_trade_pct: 0.01
+  cooldown_after_loss_bars: 48
+  requires_manual_review: true
+
+applicable_market_states:
+  - BULL_TREND
+  - BULL_EUPHORIA
+
+input_contract:
+  features_required:
+    - rsi_14
+    - volume_ratio_5
+    - atr_14
+  events_required:
+    - kline
+    - social_signal
+
+output_contract:
+  signal_type: entry
+  direction: LONG
+  horizon: intraday

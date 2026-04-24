@@ -1,0 +1,10 @@
+pub mod canonical_event;
+pub mod market_snapshot;
+pub mod feature_vector;
+pub mod signal_event;
+pub mod order_intent;
+pub mod risk_decision;
+pub mod execution_report;
+pub mod strategy_spec;
+pub mod skill_spec;
+pub mod review_report;

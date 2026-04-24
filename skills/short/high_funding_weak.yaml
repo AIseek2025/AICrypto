@@ -1,0 +1,63 @@
+skill_id: short_high_funding_weak_v1
+skill_name: 高 Funding + 弱价格结构下杀回归
+skill_family: short
+version: v1
+status: draft
+
+entry_conditions:
+  description: Funding 持续高正值但价格走弱，做空回归
+  checks:
+    - type: high_funding
+      field: funding_rate
+      operator: gt
+      threshold: 0.001
+    - type: price_weakness
+      field: price_return
+      operator: lt
+      threshold: -0.01
+    - type: overbought_reversal
+      field: rsi_14
+      operator: lt
+      threshold: 60.0
+    - type: bearish_macd
+      field: macd_hist
+      operator: lt
+      threshold: 0.0
+
+position_rules:
+  initial_size_pct: 0.05
+  max_size_pct: 0.15
+  leverage_max: 2
+
+exit_rules:
+  take_profit:
+    type: fixed_ratio
+    target_pct: 0.06
+  stop_loss:
+    type: fixed
+    max_loss_pct: 0.03
+  time_exit:
+    max_holding_bars: 240
+
+risk_rules:
+  max_loss_per_trade_pct: 0.015
+  cooldown_after_loss_bars: 72
+
+applicable_market_states:
+  - RANGE_NEUTRAL
+  - RISK_OFF
+
+input_contract:
+  features_required:
+    - funding_rate
+    - price_return
+    - rsi_14
+    - macd_hist
+  events_required:
+    - kline
+    - mark_price
+
+output_contract:
+  signal_type: entry
+  direction: SHORT
+  horizon: swing

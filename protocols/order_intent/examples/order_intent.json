@@ -1,0 +1,24 @@
+{
+  "intent_id": "intent-20231114-001",
+  "account_scope": "testnet_main",
+  "symbol": "BTCUSDT",
+  "side": "BUY",
+  "position_side": "LONG",
+  "order_type": "LIMIT",
+  "quantity": "0.010",
+  "price_limit": "42000.00",
+  "reduce_only": false,
+  "leverage_hint": 3,
+  "take_profit_hint": {
+    "type": "trailing",
+    "activation_price": "44100.00",
+    "callback_rate": "3.0"
+  },
+  "stop_loss_hint": {
+    "type": "fixed",
+    "stop_price": "40740.00"
+  },
+  "time_in_force": "GTC",
+  "origin_ref": "signal-20231114-btc-breakout-001",
+  "ts_intent": 1700000000000
+}

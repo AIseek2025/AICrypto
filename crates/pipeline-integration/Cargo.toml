@@ -1,0 +1,30 @@
+[package]
+name = "aicrypto-pipeline-integration"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "aicrypto_pipeline_integration"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pipeline-integration"
+path = "src/main.rs"
+
+[dependencies]
+aicrypto-protocols = { path = "../protocols" }
+aicrypto-foundation = { path = "../foundation" }
+aicrypto-feature-engine = { path = "../feature-engine" }
+aicrypto-signal-runtime = { path = "../signal-runtime" }
+aicrypto-portfolio-engine = { path = "../portfolio-engine" }
+aicrypto-risk-engine = { path = "../risk-engine" }
+aicrypto-gateway-trading = { path = "../gateway-trading" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+uuid = { workspace = true, features = ["v4"] }
+futures-util = { workspace = true }
+async-nats = { workspace = true }

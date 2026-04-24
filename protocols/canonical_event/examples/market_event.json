@@ -1,0 +1,27 @@
+{
+  "schema_name": "canonical_event",
+  "schema_version": "v1",
+  "event_id": "exchange:binance:kline:BTCUSDT_1700000000000",
+  "trace_id": "trace-abc-123",
+  "source_type": "exchange",
+  "source_name": "binance",
+  "event_type": "kline",
+  "symbol": "BTCUSDT",
+  "ts_event": 1700000000000,
+  "ts_ingested": 1700000000050,
+  "payload": {
+    "interval": "1h",
+    "open_time": 1700000000000,
+    "open": "42000.00",
+    "high": "42500.00",
+    "low": "41800.00",
+    "close": "42300.00",
+    "volume": "1234.56",
+    "close_time": 1700003599999,
+    "quote_volume": "52000000.00",
+    "trades": 45000,
+    "taker_buy_volume": "600.00"
+  },
+  "quality_flags": ["realtime"],
+  "tags": ["futures", "usds-m"]
+}

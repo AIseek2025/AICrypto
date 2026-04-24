@@ -1,0 +1,58 @@
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# Node.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+*.ipynb_checkpoints/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (large files)
+research/datasets/*.csv
+research/datasets/*.parquet
+research/datasets/*.json
+*.db
+*.sqlite
+
+# Docker
+postgres_data/
+redis_data/
+
+# Logs
+*.log
+logs/
+
+# Coverage
+coverage/

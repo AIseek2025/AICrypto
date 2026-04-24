@@ -1,0 +1,36 @@
+skill_id: risk_sector_exposure_reduce_v1
+skill_name: 同板块暴露过高自动缩仓
+skill_family: risk
+version: v1
+status: draft
+
+entry_conditions:
+  description: 检测到同板块持仓集中度过高，发出分散信号
+  checks:
+    - type: sector_concentration
+      description: 同板块多仓暴露超过阈值
+
+position_rules:
+  description: 此 Skill 不开仓
+
+exit_rules:
+  description: 发出 REDUCE 信号
+  reduce_pct: 0.30
+
+risk_rules:
+  priority: high
+
+applicable_market_states:
+  - BULL_TREND
+  - RANGE_NEUTRAL
+  - RISK_OFF
+  - EVENT_DRIVEN
+
+input_contract:
+  features_required: []
+  events_required: []
+
+output_contract:
+  signal_type: reduce
+  direction: NEUTRAL
+  horizon: intraday

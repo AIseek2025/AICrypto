@@ -1,0 +1,29 @@
+[package]
+name = "aicrypto-signal-runtime"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "aicrypto_signal_runtime"
+path = "src/lib.rs"
+
+[[bin]]
+name = "signal-runtime"
+path = "src/main.rs"
+
+[features]
+default = ["server"]
+server = []
+
+[dependencies]
+aicrypto-protocols = { path = "../protocols" }
+aicrypto-foundation = { path = "../foundation" }
+aicrypto-feature-engine = { path = "../feature-engine" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = "0.9"
+tracing = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+uuid = { workspace = true, features = ["v4"] }

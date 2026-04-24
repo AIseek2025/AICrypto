@@ -1,0 +1,39 @@
+skill_id: risk_regime_mismatch_cleanup_v1
+skill_name: 市场 regime 切换时清理不匹配仓位
+skill_family: risk
+version: v1
+status: draft
+
+entry_conditions:
+  description: 市场状态发生显著切换，当前持仓方向与新状态不匹配
+  checks:
+    - type: regime_changed
+      description: 市场状态从 BULL 切换到 RISK_OFF 或 PANIC
+
+position_rules:
+  description: 此 Skill 不开仓
+
+exit_rules:
+  description: 发出 CLOSE 信号，关闭所有不匹配方向的仓位
+  close_direction: LONG
+
+risk_rules:
+  priority: critical
+
+applicable_market_states:
+  - RISK_OFF
+  - PANIC_SELL
+  - EVENT_DRIVEN
+
+input_contract:
+  features_required:
+    - ma20_slope
+    - rsi_14
+    - atr_pct
+  events_required:
+    - kline
+
+output_contract:
+  signal_type: exit
+  direction: NEUTRAL
+  horizon: intraday

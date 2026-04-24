@@ -1,0 +1,22 @@
+{
+  "schema_name": "feature_vector",
+  "schema_version": "v1",
+  "feature_set": "basic_trend",
+  "feature_version": "v1",
+  "symbol": "BTCUSDT",
+  "window": "4h",
+  "ts_feature": 1700000000000,
+  "features": {
+    "price_return_4h": 0.025,
+    "price_return_24h": 0.05,
+    "ma20_slope": 0.003,
+    "rsi_14": 65.5,
+    "atr_14": 850.0,
+    "volume_ratio_4h": 1.8,
+    "funding_rate_current": 0.0001,
+    "oi_change_4h": 0.03
+  },
+  "source_refs": [
+    "canonical_event:exchange:binance:kline:BTCUSDT_1700000000000"
+  ]
+}

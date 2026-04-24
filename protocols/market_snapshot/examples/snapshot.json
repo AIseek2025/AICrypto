@@ -1,0 +1,14 @@
+{
+  "schema_name": "market_snapshot",
+  "schema_version": "v1",
+  "symbol": "BTCUSDT",
+  "exchange": "binance",
+  "market_type": "usds_m_futures",
+  "last_price": "42000.00",
+  "mark_price": "42010.50",
+  "index_price": "42005.00",
+  "funding_rate": "0.000100",
+  "open_interest": "15000.00",
+  "volume_24h": "50000.00",
+  "ts_snapshot": 1700000000000
+}

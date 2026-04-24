@@ -1,0 +1,74 @@
+skill_id: trend_btc_breakout_long_v1
+skill_name: BTC 突破关键位带动市场 Risk-On 做多
+skill_family: trend
+version: v1
+status: backtest_passed
+
+entry_conditions:
+  description: BTC 突破 20 周期高点，伴随放量确认
+  checks:
+    - type: price_breakout
+      field: close
+      operator: gt
+      reference: high_20d
+    - type: volume_confirmation
+      field: volume_ratio_5
+      operator: gt
+      threshold: 1.5
+    - type: trend_alignment
+      field: ma20_slope
+      operator: gt
+      threshold: 0.0
+    - type: not_overbought
+      field: rsi_14
+      operator: lt
+      threshold: 80.0
+
+position_rules:
+  initial_size_pct: 0.10
+  max_size_pct: 0.25
+  leverage_max: 3
+
+add_rules:
+  conditions:
+    - type: pullback_to_support
+      description: 回踩突破位获得支撑后加仓
+  add_size_pct: 0.05
+
+exit_rules:
+  take_profit:
+    type: trailing
+    activation_pct: 0.05
+    callback_pct: 0.03
+  stop_loss:
+    type: atr_based
+    atr_multiplier: 2.0
+    max_loss_pct: 0.03
+  time_exit:
+    max_holding_bars: 480
+
+risk_rules:
+  max_loss_per_trade_pct: 0.02
+  cooldown_after_loss_bars: 24
+  max_correlated_exposure_pct: 0.30
+
+applicable_market_states:
+  - BULL_TREND
+  - RANGE_NEUTRAL
+
+input_contract:
+  features_required:
+    - high_20d
+    - low_20d
+    - volume_ratio_5
+    - ma20_slope
+    - rsi_14
+    - atr_14
+    - bb_position
+  events_required:
+    - kline
+
+output_contract:
+  signal_type: entry
+  direction: LONG
+  horizon: swing

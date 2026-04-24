@@ -1,0 +1,119 @@
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: aicrypto-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: aicrypto
+      POSTGRES_PASSWORD: aicrypto
+      POSTGRES_DB: aicrypto
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../../scripts/bootstrap/001_init_schema.sql:/docker-entrypoint-initdb.d/001_init_schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aicrypto"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: aicrypto-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:2-alpine
+    container_name: aicrypto-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["--jetstream", "--store_dir", "/data"]
+    volumes:
+      - natsdata:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  gateway-market:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.service
+      args:
+        BINARY: gateway-market
+    container_name: aicrypto-gateway-market
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AICRYPTO_ENV: dev
+      DATABASE_URL: postgres://aicrypto:aicrypto@postgres:5432/aicrypto
+      BINANCE_REST_URL: https://testnet.binancefuture.com
+      BINANCE_WS_URL: wss://stream.binancefuture.com/ws
+      BINANCE_TESTNET: "true"
+    ports:
+      - "8081:8080"
+
+  feature-engine:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.service
+      args:
+        BINARY: feature-engine
+    container_name: aicrypto-feature-engine
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AICRYPTO_ENV: dev
+      DATABASE_URL: postgres://aicrypto:aicrypto@postgres:5432/aicrypto
+    ports:
+      - "8082:8080"
+
+  signal-runtime:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.service
+      args:
+        BINARY: signal-runtime
+    container_name: aicrypto-signal-runtime
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AICRYPTO_ENV: dev
+      DATABASE_URL: postgres://aicrypto:aicrypto@postgres:5432/aicrypto
+    volumes:
+      - ../../skills:/app/skills
+    ports:
+      - "8083:8080"
+
+  api-gateway:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.service
+      args:
+        BINARY: api-gateway
+    container_name: aicrypto-api-gateway
+    environment:
+      AICRYPTO_ENV: dev
+      API_PORT: "8080"
+    volumes:
+      - ../../skills:/app/skills
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
+  redisdata:
+  natsdata:
