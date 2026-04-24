@@ -12,6 +12,7 @@ members = [
     "crates/backtest-engine",
     "crates/pipeline-integration",
     "crates/api-gateway",
+    "crates/sim-trading",
 ]
 
 [workspace.package]

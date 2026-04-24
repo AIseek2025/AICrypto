@@ -1,0 +1,28 @@
+[package]
+name = "aicrypto-sim-trading"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+aicrypto-protocols = { path = "../protocols" }
+aicrypto-foundation = { path = "../foundation" }
+aicrypto-feature-engine = { path = "../feature-engine" }
+aicrypto-signal-runtime = { path = "../signal-runtime" }
+aicrypto-portfolio-engine = { path = "../portfolio-engine" }
+aicrypto-risk-engine = { path = "../risk-engine" }
+aicrypto-gateway-trading = { path = "../gateway-trading" }
+tokio.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+chrono.workspace = true
+uuid = { workspace = true, features = ["v4", "serde"] }
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+rand.workspace = true
+axum.workspace = true
+tower-http.workspace = true
+
+[[bin]]
+name = "sim-trading"
+path = "src/main.rs"
