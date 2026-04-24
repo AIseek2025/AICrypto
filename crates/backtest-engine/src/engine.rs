@@ -1,3 +1,4 @@
+#![allow(unused_assignments)]
 use crate::metrics::{BacktestMetrics, TradeRecord};
 use crate::position::{Position, PositionSide};
 use crate::report::BacktestReport;
@@ -52,6 +53,7 @@ impl BacktestEngine {
         symbol: &str,
         interval: &str,
     ) -> BacktestReport {
+        #[allow(unused_assignments)]
         let mut equity = self.config.initial_equity;
         let mut position: Option<Position> = None;
         let mut trades: Vec<TradeRecord> = Vec::new();

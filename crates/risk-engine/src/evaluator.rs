@@ -1,6 +1,6 @@
 use crate::rules::{RiskState, RuleConfig, RuleEngine};
 use aicrypto_protocols::order_intent::OrderIntent;
-use aicrypto_protocols::risk_decision::{RiskDecision, RiskVerdict, RuleHit, Severity};
+use aicrypto_protocols::risk_decision::{RiskDecision, RiskVerdict, Severity};
 use chrono::Utc;
 use tracing;
 use uuid::Uuid;

@@ -53,7 +53,7 @@ fn generate_sample_candles() -> Vec<aicrypto_feature_engine::ohlcv::OhlcvCandle>
 
     for i in 0..500 {
         let phase = trend[i % trend.len()];
-        let noise = ((i as f64 * 0.1).sin() * 0.003);
+        let noise = (i as f64 * 0.1).sin() * 0.003 ;
         let ret = phase.0 + noise;
         let vol_factor = phase.1;
 

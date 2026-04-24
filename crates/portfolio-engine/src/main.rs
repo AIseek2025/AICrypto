@@ -1,3 +1,4 @@
+#![allow(unreachable_code)]
 use aicrypto_foundation::config::AppConfig;
 use aicrypto_foundation::observability;
 use aicrypto_portfolio_engine::portfolio::PortfolioManager;

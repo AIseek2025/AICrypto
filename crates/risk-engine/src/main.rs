@@ -1,9 +1,9 @@
+#![allow(unreachable_code)]
 use aicrypto_foundation::config::AppConfig;
 use aicrypto_foundation::observability;
 use aicrypto_risk_engine::evaluator::RiskEvaluator;
 use aicrypto_risk_engine::rules::{RiskState, RuleConfig};
 use aicrypto_protocols::order_intent::*;
-use aicrypto_protocols::risk_decision::RiskVerdict;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

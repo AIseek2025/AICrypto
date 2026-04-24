@@ -1,11 +1,9 @@
 use crate::binance::models::*;
 use anyhow::{Context, Result};
-use futures_util::{SinkExt, StreamExt};
-use serde::de::DeserializeOwned;
+use futures_util::StreamExt;
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
-use tracing;
 
 #[derive(Debug, Clone)]
 pub enum WsMessage {
@@ -71,7 +69,7 @@ impl WsMarketStream {
                         tracing::debug!(error = %e, "failed to handle WS message");
                     }
                 }
-                Ok(Message::Ping(data)) => {
+                Ok(Message::Ping(_data)) => {
                     tracing::trace!("received ping");
                 }
                 Ok(Message::Close(reason)) => {

@@ -35,7 +35,8 @@ pub enum PositionSide {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "UPPERCASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[allow(non_camel_case_types)]
 pub enum OrderType {
     LIMIT,
     MARKET,

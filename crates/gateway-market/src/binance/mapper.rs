@@ -1,7 +1,7 @@
 use crate::binance::models::*;
 use aicrypto_protocols::canonical_event::{CanonicalEvent, SourceType};
 use aicrypto_protocols::market_snapshot::MarketSnapshot;
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::Utc;
 use serde_json::json;
 
 pub fn kline_to_event(kline: &BinanceKline, symbol: &str) -> CanonicalEvent {

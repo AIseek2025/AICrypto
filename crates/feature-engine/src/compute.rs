@@ -1,9 +1,7 @@
-use crate::feature_set::{basic_trend_features, momentum_features, volatility_features, volume_features, structure_features};
 use crate::indicators;
 use crate::ohlcv::OhlcvSeries;
 use aicrypto_protocols::feature_vector::FeatureVector;
 use serde_json::json;
-use std::collections::HashMap;
 
 pub fn compute_all_features(series: &OhlcvSeries) -> Option<FeatureVector> {
     if series.candles.len() < 50 {
@@ -18,8 +16,8 @@ pub fn compute_all_features(series: &OhlcvSeries) -> Option<FeatureVector> {
     let mut features = serde_json::Map::new();
 
     let last_close = *closes.last()?;
-    let last_high = *highs.last()?;
-    let last_low = *lows.last()?;
+    let _last_high = *highs.last()?;
+    let _last_low = *lows.last()?;
 
     let sma10 = indicators::sma(&closes, 10);
     let sma20 = indicators::sma(&closes, 20);
@@ -41,7 +39,7 @@ pub fn compute_all_features(series: &OhlcvSeries) -> Option<FeatureVector> {
     let low_20 = indicators::rolling_min(&lows, 20);
 
     let n = series.candles.len();
-    let last_idx = n - 1;
+    let _last_idx = n - 1;
 
     if let Some(Some(v)) = sma10.last() { features.insert("sma_10".into(), json!(v)); }
     if let Some(Some(v)) = sma20.last() { features.insert("sma_20".into(), json!(v)); }
@@ -79,7 +77,7 @@ pub fn compute_all_features(series: &OhlcvSeries) -> Option<FeatureVector> {
         features.insert("atr_pct".into(), json!(if last_close > 0.0 { v / last_close } else { 0.0 }));
     }
 
-    if let Some(Some((bb_lower, bb_mid, bb_upper))) = bb.last() {
+    if let Some(Some((bb_lower, _bb_mid, bb_upper))) = bb.last() {
         features.insert("bb_upper".into(), json!(bb_upper));
         features.insert("bb_lower".into(), json!(bb_lower));
         let bb_width = bb_upper - bb_lower;

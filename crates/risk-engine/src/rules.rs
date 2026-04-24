@@ -1,5 +1,5 @@
 use aicrypto_protocols::order_intent::OrderIntent;
-use aicrypto_protocols::risk_decision::{RuleHit, Severity};
+use aicrypto_protocols::risk_decision::RuleHit;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

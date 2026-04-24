@@ -1,3 +1,4 @@
+#![allow(unreachable_code)]
 use aicrypto_feature_engine::compute::compute_all_features;
 use aicrypto_feature_engine::ohlcv::{OhlcvCandle, OhlcvSeries};
 use aicrypto_foundation::config::AppConfig;
@@ -5,7 +6,6 @@ use aicrypto_foundation::observability;
 use aicrypto_signal_runtime::market_state;
 use aicrypto_signal_runtime::signal_engine::SignalEngine;
 use aicrypto_signal_runtime::skill_registry::SkillRegistry;
-use serde_json::json;
 use std::path::PathBuf;
 
 #[cfg(feature = "server")]

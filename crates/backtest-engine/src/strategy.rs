@@ -146,7 +146,7 @@ impl BacktestStrategy for GlobalRiskOffReduce {
         self.sma_sum += bar.close;
         self.sma_count += 1;
         let sma = if self.sma_count >= self.sma_period {
-            let start_idx = self.sma_count.saturating_sub(self.sma_period);
+            let _start_idx = self.sma_count.saturating_sub(self.sma_period);
             self.sma_sum / self.sma_period.min(self.sma_count) as f64
         } else {
             bar.close

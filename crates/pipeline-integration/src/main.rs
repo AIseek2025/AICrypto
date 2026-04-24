@@ -2,7 +2,7 @@ use aicrypto_feature_engine::ohlcv::{OhlcvCandle, OhlcvSeries};
 use aicrypto_foundation::config::AppConfig;
 use aicrypto_foundation::observability;
 use aicrypto_pipeline_integration::pipeline::Pipeline;
-use aicrypto_protocols::signal_event::{Direction, Horizon, SignalEvent, SignalType};
+use aicrypto_protocols::signal_event::{Direction, SignalType};
 use std::path::PathBuf;
 
 fn find_project_root() -> PathBuf {

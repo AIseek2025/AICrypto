@@ -1,7 +1,6 @@
 use aicrypto_protocols::order_intent::*;
-use aicrypto_protocols::signal_event::{Direction, Horizon, SignalEvent, SignalType};
+use aicrypto_protocols::signal_event::{Direction, SignalEvent, SignalType};
 use chrono::Utc;
-use tracing;
 use uuid::Uuid;
 
 pub struct OrderBuilder {
